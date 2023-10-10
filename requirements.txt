@@ -1,0 +1,9 @@
+requests
+pydantic==1.10
+lxml
+dramatiq
+python-decouple
+
+black
+ruff
+reorder-python-imports
