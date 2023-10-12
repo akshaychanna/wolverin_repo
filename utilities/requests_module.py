@@ -4,6 +4,7 @@ from requests.exceptions import ConnectTimeout
 from requests.exceptions import ReadTimeout
 from requests.exceptions import Timeout
 from requests.exceptions import TooManyRedirects
+from fake_useragent import UserAgent as ua
 
 from .logger_module import AsyncScraperLogger
 
@@ -26,6 +27,7 @@ def request_handler(session: Session, url: str, method: str, **kwargs) -> tuple:
     """
     if not session:
         session = Session()
+        session.headers.update({'user-agent':ua().random})
     scrape_job_id = kwargs.pop("scrape_job_id", "")
     logger.info(f"{scrape_job_id=} | requesting for {url=}")
     logger.debug(f"{scrape_job_id=} | Session cookies {session.cookies=}")
@@ -60,7 +62,7 @@ def prepare_session(url: str, method: str, **kwargs: dict) -> Session:
     """
     web_session = Session()
 
-    user_agent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15" # noqa
+    user_agent = ua().random
     web_session.headers.update({"user-agent": user_agent})  # automate with faker
     logger.info(f"Added user agent {user_agent=}")
     home_page_response, req_status = request_handler(
