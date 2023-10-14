@@ -27,7 +27,7 @@ def request_handler(session: Session, url: str, method: str, **kwargs) -> tuple:
     """
     if not session:
         session = Session()
-        session.headers.update({'user-agent':ua().random})
+        session.headers.update({"user-agent": ua().random})
     scrape_job_id = kwargs.pop("scrape_job_id", "")
     logger.info(f"{scrape_job_id=} | requesting for {url=}")
     logger.debug(f"{scrape_job_id=} | Session cookies {session.cookies=}")
@@ -46,7 +46,7 @@ def request_handler(session: Session, url: str, method: str, **kwargs) -> tuple:
         else:
             # exception for website not available => SCR308
             logger.info(
-                f"{scrape_job_id=} | Request to website failed, status code -> {response=}" # noqa
+                f"{scrape_job_id=} | Request to website failed, status code -> {response=}"  # noqa
             )
     return None, False
 

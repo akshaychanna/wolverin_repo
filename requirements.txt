@@ -1,7 +1,8 @@
 requests
 pydantic==1.10
 lxml
-dramatiq
+#dramatiq
+celery
 python-decouple
 fake-useragent
 
