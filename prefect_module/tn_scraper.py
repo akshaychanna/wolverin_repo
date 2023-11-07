@@ -5,25 +5,19 @@ from bson import ObjectId
 from requests import Session,post
 import requests
 from prefect import task, flow, get_run_logger
-from celery.contrib import rdb
 from datetime import datetime 
 from urllib.parse import urljoin
 
 from utilities import DatalakeConnect
 from celery_app import app
 from requests_module import prepare_session, request_handler
-import logging
-logging.basicConfig(filename=f"tamilnadu_bulkscraper_{datetime.now()}.log",
-                    format='%(asctime)s %(message)s',
-                    filemode='w')
-logger = logging.getLogger()
-logger.setLevel(logging.DEBUG)
+from captcha_solver_module import internal_captcha_solver_with_bytes
 
 HOMEPAGE_URL = "https://eservices.tn.gov.in/eservicesnew/land/"
 
 @app.task(name="tn_survey_document_scraper")
 def get_survey_document(survey_meta:Dict, village_meta: Dict, scraper_session: Session, captcha_result:Dict):
-
+    logger = get_run_logger()
     captcha = captcha_result.get('result')[0]
 
     if captcha:
@@ -122,23 +116,14 @@ def get_survey_data(village_code:str, village_meta: Dict):
     return village_survey_meta
 
 
-def captcha_integration(image_bytes,state_choice=None):
-    files = {'file':image_bytes}
-    headers = {'X-API-Key':'7VmIqptvtY!@#'}
-    response = post('http://captcha.advarisk.com:8000/capctha_solver/?state_choice={}'.format(state_choice), files=files, headers=headers)
-    if response.status_code == 200:
-        return {'result':response.json(), 'status':'success'}
-    else:
-        return {'result':None, 'status':'captcha_not_solved'}
-
 @task(name="distribute_khasra_tasks")
 def get_khasra_documents(village_meta: Dict, survey_meta: Dict, scraper_session: Session, queue: str):
-    import pdb;pdb.set_trace()
     logger = get_run_logger()
     for survey_data in survey_meta[:2]:
         captcha_response = scraper_session.get(urljoin(HOMEPAGE_URL,"simpleCaptcha.html"),verify=False)
         try:
-            captcha = captcha_integration(captcha_response.content,state_choice='def')
+            #captcha = captcha_integration(captcha_response.content,state_choice='def')
+            captcha = internal_captcha_solver_with_bytes(captcha_image = image_bytes)
             print(captcha.get('result')[0])
         except Exception as e:
             logger.info('Internal captcha service failed!!')
