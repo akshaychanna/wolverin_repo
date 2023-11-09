@@ -2,7 +2,7 @@ from bs4 import BeautifulSoup
 from lxml import html
 from datetime import datetime
 import logging
-from utilities import UPLOAD_FILE, DatalakeConnect
+from utilities import DatalakeConnect
 from typing import Dict
 
 
@@ -23,20 +23,6 @@ def to_rows_updated(html_text, index):
     else:
         return None
 
-def upload_file(file_name):
-    """
-    upload file to wasabi and return cloud path
-    """
-    try:
-        bucket = 'advarisk-public'
-        key = 'land_records/tamilnadu/712/{}'.format(file_name)
-        UPLOAD_FILE.upload(filename=file_name, key=key,
-               bucket=bucket)  # upload the pdf on wasabi
-        cloud_path = 'https://s3.eu-central-1.wasabisys.com/{}/{}'.format(
-            bucket, key)
-        return cloud_path
-    except Exception as ex:
-        logger.info(str(ex))
 
 def insert_data(value=Dict()):
     datalake_connection = DatalakeConnect()
@@ -131,8 +117,7 @@ def tn_parser(response, records):
     tn_details['survey_details'] = survey_details
     tn_details['total'] = total_values
     tn_details['referance_no'] = refno
-    tn_details['html_link'] = upload_file(file_name)
-    logger.info('html file uploaded to wasabi')
+
 
     inner_status = tn_details.pop('inner', True)
     order_result = {
