@@ -3,7 +3,6 @@ from pickle import dumps, loads
 
 from requests import Session
 from prefect import task, flow, get_run_logger
-from celery.contrib import rdb
 
 from utilities import DatalakeConnect
 from celery_app import app
