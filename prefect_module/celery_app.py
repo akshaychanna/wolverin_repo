@@ -1,9 +1,9 @@
-from celery import Celery, signals
+from celery import Celery
 from prefect import variables
 
 app = Celery(
-    broker=f"{variables.get('redis_local')}/1",
-    backend=f"{variables.get('redis_local')}/2"
+    broker=f"{variables.get('redis_local')}/5",
+    backend=f"{variables.get('redis_local')}/6"
 )
 
 app.conf.update(

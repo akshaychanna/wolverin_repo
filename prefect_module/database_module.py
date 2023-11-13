@@ -1,6 +1,7 @@
 from celery import Celery, Task
 from celery.signals import worker_process_init, worker_process_shutdown
-from pymongo import MongoClient, PyMongoError
+from pymongo import MongoClient
+from pymongo.errors import PyMongoError
 from prefect import variables
 from celery.contrib import rdb
 
@@ -63,7 +64,7 @@ def close_db_connection(**kwargs):
 @app.task(base=DatabaseTask, name="utilities.database_worker")
 def database_utility_worker(database_name, collection_name, action, query_parameters):
     try:
-        db = database_utility_worker.db_client[database_name]
+        db = database_utility_worker._db_client[database_name]
         collection = db[collection_name]
 
         if action == "insert_one":
@@ -71,8 +72,8 @@ def database_utility_worker(database_name, collection_name, action, query_parame
         elif action == "insert_many":
             collection.insert_many(query_parameters.get("data"))
         elif action == "update":
-            collection.update_many(query=query_parameters.get("query"),
-                                   update={"$set": query_parameters.get("data")})
+            collection.update_one(query_parameters.get("query"),
+                                  {"$set": query_parameters.get("data")})
     except PyMongoError as e:
         print(f"An error occurred while performing the database operation: {e}")
     except KeyError as e:
