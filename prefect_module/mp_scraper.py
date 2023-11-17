@@ -24,7 +24,7 @@ def get_khasra_document(survey_meta: Dict, scraper_session: Session):
     )
     if _:
         # rdb.set_trace()
-        status_data = {"scrape_status": 1, "scrape_time":datetime.now()}
+        status_data = {"document_fetch_status.khasra_document": 1, "scrape_time":datetime.now()}
         db_app.send_task(
             name="utilities.database_worker",
             args=[
@@ -37,7 +37,7 @@ def get_khasra_document(survey_meta: Dict, scraper_session: Session):
     with open(file_name, "w") as _f:
         _f.write(khasra_page.text)
     return file_name
-    
+
 
 @app.task(name="mp_khatuni_document_scraper")
 def get_khatuni_document(survey_meta:Dict, scraper_session: Session):
@@ -50,7 +50,7 @@ def get_khatuni_document(survey_meta:Dict, scraper_session: Session):
     )
     if _:
         # rdb.set_trace()
-        status_data = {"scrape_status": 1, "scrape_time":datetime.now()}
+        status_data = {"document_fetch_status.khatuni_document": 1, "scrape_time":datetime.now()}
         db_app.send_task(
             name="utilities.database_worker",
             args=[
@@ -169,20 +169,16 @@ def get_khatuni_documents(village_meta: Dict, survey_meta: Dict, scraper_session
 def mp_land_record_bulk_scraper(district_code: str, queue_name: str):
     logger = get_run_logger()
     indices = get_indices(district_code=district_code)
-    # for village in indices:
-    #     logger.info(f"Village --> {village}")
-    village = "486542" # for testing
-    village_meta = get_village_meta(district_code=district_code, village_code=village)
-    logger.info(f"Village meta data --> {village_meta}")
-    survey_meta = get_survey_data(village_code=village, village_meta=village_meta)
-    web_session = dumps(generate_web_session())
-    logger.info("Task distribution starts")
-    get_khasra_documents(village_meta, survey_meta, web_session, queue_name)
-    get_khatuni_documents(village_meta, survey_meta, web_session, queue_name)
+    for village in indices[17:]:
+        logger.info(f"Village --> {village}")
+        village_meta = get_village_meta(district_code=district_code, village_code=village)
+        logger.info(f"Village meta data --> {village_meta}")
+        survey_meta = get_survey_data(village_code=village, village_meta=village_meta)
+        web_session = dumps(generate_web_session())
+        logger.info("Task distribution starts")
+        get_khasra_documents(village_meta, survey_meta, web_session, queue_name)
+        get_khatuni_documents(village_meta, survey_meta, web_session, queue_name)
 
 
 if __name__ == "__main__":
-    mp_land_record_bulk_scraper("50", "test_queue")
-
-
-    
+    mp_land_record_bulk_scraper("31", "test_queue")
