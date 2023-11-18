@@ -32,8 +32,7 @@ def get_khasra_document(survey_meta: Dict, scraper_session: Session, target_path
                 {"data":status_data, "query":survey_meta}
             ]
         )
-    file_name = str(Path(target_path / f"files/khasra_doc_{survey_meta.get('survey_code')}.html"))
-    # file_name = f"/Users/santhoshsolomon/Projects/mr_hulk/files/khasra_doc_{survey_meta.get('survey_code')}.html"
+    file_name = str(Path(target_path, f"files/khasra_doc_{survey_meta.get('survey_code')}.html"))
     with open(file_name, "w") as _f:
         _f.write(khasra_page.text)
     return file_name
@@ -58,7 +57,7 @@ def get_khatuni_document(survey_meta:Dict, scraper_session: Session, target_path
                 {"data":status_data, "query":survey_meta}
             ]
         )
-    file_name = str(Path(target_path / f"files/khatuni_doc_{survey_meta.get('survey_code')}.html"))
+    file_name = str(Path(target_path, f"files/khatuni_doc_{survey_meta.get('survey_code')}.html"))
     # file_name = f"/Users/santhoshsolomon/Projects/mr_hulk/files/khatuni_doc_{survey_meta.get('survey_code')}.html"
     print(file_name)
     with open(file_name,"w") as _f:
@@ -169,7 +168,7 @@ def get_khatuni_documents(village_meta: Dict, survey_meta: Dict, scraper_session
 def mp_land_record_bulk_scraper(district_code: str, queue_name: str, file_path: str):
     logger = get_run_logger()
     indices = get_indices(district_code=district_code)
-    for village in indices[17:]:
+    for village in indices[:2]:
         logger.info(f"Village --> {village}")
         village_meta = get_village_meta(district_code=district_code, village_code=village)
         logger.info(f"Village meta data --> {village_meta}")
@@ -181,4 +180,4 @@ def mp_land_record_bulk_scraper(district_code: str, queue_name: str, file_path: 
 
 
 if __name__ == "__main__":
-    mp_land_record_bulk_scraper("31", "test_queue", "/app")
+    mp_land_record_bulk_scraper.serve(name="mp_async_bulk_scraper_test_1")

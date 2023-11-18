@@ -7,8 +7,8 @@ from celery.contrib import rdb
 
 app = Celery(
     "database_app",
-    broker="redis://localhost:6379/0",
-    backend="redis://localhost:6379/1"
+    broker=f'{variables.get("redis_prod")}/12',
+    backend=f'{variables.get("redis_prod")}/11'
 )
 
 app.conf.update(

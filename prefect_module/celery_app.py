@@ -2,8 +2,8 @@ from celery import Celery
 from prefect import variables
 
 app = Celery(
-    broker=f"{variables.get('redis_local')}/5",
-    backend=f"{variables.get('redis_local')}/6"
+    broker=f"{variables.get('redis_prod')}/5",
+    backend=f"{variables.get('redis_prod')}/6"
 )
 
 app.conf.update(
