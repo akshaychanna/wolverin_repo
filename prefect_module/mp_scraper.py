@@ -2,6 +2,7 @@ from typing import Dict
 from pickle import dumps, loads
 from pathlib import Path
 from datetime import datetime
+from time import sleep
 
 from celery.contrib import rdb
 from requests import Session
@@ -73,7 +74,7 @@ def get_indices(district_code:str):
         database="scrape-meta", collection="mp_lr_meta"
     )
     distinct_villages = data_collection.distinct(
-        "village_code", {"district_code": district_code}#, "survey_status":"P"}
+        "village_code", {"district_code": district_code, "survey_status":"P"}
     )
     distinct_villages = list(distinct_villages)
     datalake_connection.close_connection()
@@ -131,7 +132,11 @@ def generate_web_session():
 def get_khasra_documents(village_meta: Dict, survey_meta: Dict, scraper_session: Session, queue: str, target_path: str):
     logger = get_run_logger()
     # import pdb; pdb.set_trace()
+    counter = 0
     for survey_data in survey_meta:
+        if counter == 200:
+            sleep(1)
+            counter = 0
         meta_data = {
             "district_code": village_meta.get("district_code"),
             "taluka_code": village_meta.get("taluka_code"),
@@ -144,12 +149,17 @@ def get_khasra_documents(village_meta: Dict, survey_meta: Dict, scraper_session:
             queue=f"{queue}_khasra_docs",
         )
         logger.info(f"task id for {survey_data.get('survey_number')} is {task_id}")
+        counter+=1
 
 @task(name="distribute_khatuni_tasks")
 def get_khatuni_documents(village_meta: Dict, survey_meta: Dict, scraper_session: Session, queue: str, target_path: str):
     logger = get_run_logger()
     # import pdb; pdb.set_trace()
+    counter = 0
     for survey_data in survey_meta:
+        if counter == 200:
+            sleep(1)
+            counter = 0
         meta_data = {
             "district_code": village_meta.get("district_code"),
             "taluka_code": village_meta.get("taluka_code"),
@@ -162,22 +172,25 @@ def get_khatuni_documents(village_meta: Dict, survey_meta: Dict, scraper_session
             queue=f"{queue}_khatuni_docs"
         )
         logger.info(f"task id for {survey_data.get('survey_number')} is {task_id}")
+        counter+=1
 
 
 @flow(name="mp_lr_bulk")
 def mp_land_record_bulk_scraper(district_code: str, queue_name: str, file_path: str):
     logger = get_run_logger()
     indices = get_indices(district_code=district_code)
-    for village in indices[:2]:
-        logger.info(f"Village --> {village}")
-        village_meta = get_village_meta(district_code=district_code, village_code=village)
-        logger.info(f"Village meta data --> {village_meta}")
-        survey_meta = get_survey_data(village_code=village, village_meta=village_meta)
-        web_session = dumps(generate_web_session())
-        logger.info("Task distribution starts")
-        get_khasra_documents(village_meta, survey_meta, web_session, queue_name, file_path)
-        get_khatuni_documents(village_meta, survey_meta, web_session, queue_name, file_path)
+    logger.info(f"Villages list --> {list(indices)}")
+    for village in indices:
+        if village != "354201":
+            logger.info(f"Village --> {village}")
+            village_meta = get_village_meta(district_code=district_code, village_code=village)
+            logger.info(f"Village meta data --> {village_meta}")
+            survey_meta = get_survey_data(village_code=village, village_meta=village_meta)
+            web_session = dumps(generate_web_session())
+            logger.info("Task distribution starts")
+            get_khasra_documents(village_meta, survey_meta, web_session, queue_name, file_path)
+            get_khatuni_documents(village_meta, survey_meta, web_session, queue_name, file_path)
 
 
 if __name__ == "__main__":
-    mp_land_record_bulk_scraper.serve(name="mp_async_bulk_scraper_test_1")
+    mp_land_record_bulk_scraper.serve(name="mp_async_bulk_scraper_district_23")

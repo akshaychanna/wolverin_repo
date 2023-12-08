@@ -38,7 +38,7 @@ def request_handler(session: Session, url: str, method: str, **kwargs) -> tuple:
         )
         logger.debug(f"{scrape_job_id=} | TIme taken for response {response.elapsed}")
     except (ConnectionError, ConnectTimeout, ReadTimeout, Timeout, TooManyRedirects):
-        logger.exception(f"{scrape_job_id=} | request failed")
+        logger.error(f"{scrape_job_id=} | request failed")
     else:
         if response.status_code == 200:
             logger.info(f"{scrape_job_id=} | request is success, returing {response=}")
@@ -66,7 +66,7 @@ def prepare_session(url: str, method: str, **kwargs: dict) -> Session:
     web_session.headers.update({"user-agent": user_agent})  # automate with faker
     logger.info(f"Added user agent {user_agent=}")
     home_page_response, req_status = request_handler(
-        session=web_session, url=url, method=method
+        session=web_session, url=url, method=method, timeout=120
     )
 
     return web_session
