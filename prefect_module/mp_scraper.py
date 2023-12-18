@@ -29,7 +29,7 @@ def get_khasra_document(survey_meta: Dict, scraper_session: Session, target_path
         db_app.send_task(
             name="utilities.database_worker",
             args=[
-                "scrape-meta", "mp_lr_meta", "update",
+                "Land_Records", "mp_survey_no_index", "update",
                 {"data":status_data, "query":survey_meta}
             ]
         )
@@ -54,7 +54,7 @@ def get_khatuni_document(survey_meta:Dict, scraper_session: Session, target_path
         db_app.send_task(
             name="utilities.database_worker",
             args=[
-                "scrape-meta", "mp_lr_meta", "update",
+                "Land_Records", "mp_survey_no_index", "update",
                 {"data":status_data, "query":survey_meta}
             ]
         )
@@ -71,12 +71,14 @@ def get_indices(district_code:str):
     logger = get_run_logger()
     datalake_connection = DatalakeConnect()
     data_collection = datalake_connection.connect_to_collection(
-        database="scrape-meta", collection="mp_lr_meta"
+        database="Land_Records", collection="mp_survey_no_index"
     )
     distinct_villages = data_collection.distinct(
-        "village_code", {"district_code": district_code, "survey_status":"P"}
+        "village_code", {"district_code": district_code, "survey_status":"P", 'document_fetch_status.khatuni_document': {'$exists': False}}
     )
+    logger.info(district_code)
     distinct_villages = list(distinct_villages)
+    logger.info(distinct_villages)
     datalake_connection.close_connection()
     return distinct_villages
 
@@ -86,7 +88,7 @@ def get_village_meta(district_code:str, village_code: str):
     logger = get_run_logger()
     datalake_connection = DatalakeConnect()
     data_collection = datalake_connection.connect_to_collection(
-        database="scrape-meta", collection="mp_lr_meta"
+        database="Land_Records", collection="mp_survey_no_index"
     )
     village_meta = data_collection.find_one(
         {"district_code": district_code, "village_code": village_code},
@@ -101,11 +103,11 @@ def get_survey_data(village_code:str, village_meta: Dict):
     logger = get_run_logger()
     datalake_connection = DatalakeConnect()
     data_collection = datalake_connection.connect_to_collection(
-        database="scrape-meta", collection="mp_lr_meta"
+        database="Land_Records", collection="mp_survey_no_index"
     )
     village_survey_meta = data_collection.aggregate(
         [
-            {"$match": {"village_code": village_code}},
+            {"$match": {"village_code": village_code, "survey_status":"P", 'document_fetch_status.khatuni_document': {'$exists': False} }},
             {
                 "$project": {
                     "_id": 0,
@@ -179,6 +181,7 @@ def get_khatuni_documents(village_meta: Dict, survey_meta: Dict, scraper_session
 def mp_land_record_bulk_scraper(district_code: str, queue_name: str, file_path: str):
     logger = get_run_logger()
     indices = get_indices(district_code=district_code)
+    # import pdb; pdb.set_trace()
     logger.info(f"Villages list --> {list(indices)}")
     for village in indices:
         if village != "354201":
@@ -193,4 +196,5 @@ def mp_land_record_bulk_scraper(district_code: str, queue_name: str, file_path: 
 
 
 if __name__ == "__main__":
-    mp_land_record_bulk_scraper.serve(name="mp_async_bulk_scraper_district_23")
+    # mp_land_record_bulk_scraper("02", "test", "/app")
+    mp_land_record_bulk_scraper.serve(name="mp_async")
